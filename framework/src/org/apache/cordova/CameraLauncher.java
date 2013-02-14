@@ -269,19 +269,35 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
 
         // If CAMERA
         if (srcType == CAMERA) {
+
             // If image available
             if (resultCode == Activity.RESULT_OK) {
+
                 try {
+
+                    // Handle broken IMAGE_CAPTURE intents where nothing is written to extras file
+                    String testFilePath = FileUtils.stripFileProtocol(imageUri.toString());
+                    File testFile = new File(testFilePath);
+                    LOG.d(LOG_TAG, "checking " + testFilePath + " exists");
+                    if(!testFile.exists()){
+
+                        LOG.d(LOG_TAG, "WARNING: IMAGE_CAPTURE intent didn't write " + testFilePath + " file.  Writing bitmap data.");
+                        FileOutputStream pfos = new FileOutputStream(testFile);
+
+                        Bitmap data = (Bitmap)intent.getExtras().get("data");
+                        data.compress(this.encodingType == JPEG ? CompressFormat.JPEG : CompressFormat.PNG, 100, pfos);
+
+                        pfos.flush();
+                        pfos.close();
+
+                    }
+
                     // Create an ExifHelper to save the exif data that is lost during compression
                     ExifHelper exif = new ExifHelper();
-                    try {
-                        if (this.encodingType == JPEG) {
-                            exif.createInFile(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()) + "/.Pic.jpg");
-                            exif.readExifData();
-                            rotate = exif.getOrientation();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if (this.encodingType == JPEG) {
+                        exif.createInFile(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()) + "/.Pic.jpg");
+                        exif.readExifData();
+                        rotate = exif.getOrientation();
                     }
 
                     Bitmap bitmap = null;
@@ -294,7 +310,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                             // Try to get the bitmap from intent.
                             bitmap = (Bitmap)intent.getExtras().get("data");
                         }
-                        
+
                         // Double-check the bitmap.
                         if (bitmap == null) {
                             Log.d(LOG_TAG, "I either have a null image path or bitmap");
@@ -323,7 +339,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                         }
 
                         // If all this is true we shouldn't compress the image.
-                        if (this.targetHeight == -1 && this.targetWidth == -1 && this.mQuality == 100 && 
+                        if (this.targetHeight == -1 && this.targetWidth == -1 && this.mQuality == 100 &&
                                 !this.correctOrientation) {
                             writeUncompressedImage(uri);
 
@@ -400,7 +416,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                         // Log.d(LOG_TAG, "Real path = " + imagePath);
                         // Log.d(LOG_TAG, "mime type = " + mimeType);
                         // If we don't have a valid image so quit.
-                        if (imagePath == null || mimeType == null || 
+                        if (imagePath == null || mimeType == null ||
                                 !(mimeType.equalsIgnoreCase("image/jpeg") || mimeType.equalsIgnoreCase("image/png"))) {
                         	Log.d(LOG_TAG, "I either have a null image path or bitmap");
                             this.failPicture("Unable to retrieve path to picture!");
@@ -572,13 +588,13 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(imagePath, options);
-        
+
         //CB-2292: WTF? Why is the width null?
         if(options.outWidth == 0 || options.outHeight == 0)
         {
             return null;
         }
-        
+
         // determine the correct aspect ratio
         int[] widthHeight = calculateAspectRatio(options.outWidth, options.outHeight);
 
