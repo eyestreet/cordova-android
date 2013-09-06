@@ -40,6 +40,7 @@ import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -211,6 +212,7 @@ public class Capture extends CordovaPlugin {
 
         // Specify file so that large image is captured and returned
         // File photo = new File(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()), "Capture.jpg");
+
         Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_IMAGE);  // create a file to save the video
         intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, fileUri);
 
@@ -228,8 +230,11 @@ public class Capture extends CordovaPlugin {
         // File video = new File(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()), "videocapture");
         // intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, Uri.fromFile(video));
 
-        Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);  // create a file to save the video
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+        Log.d(LOG_TAG, "Build.VERSION.SDK = " + Build.VERSION.SDK_INT);
+        if(Build.VERSION.SDK_INT != Build.VERSION_CODES.GINGERBREAD_MR1) {
+            Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);  // create a file to save the video
+            intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, fileUri);
+        }
 
         this.cordova.startActivityForResult((CordovaPlugin) this, intent, CAPTURE_VIDEO);
     }
@@ -313,6 +318,7 @@ public class Capture extends CordovaPlugin {
                 }
             } else if (requestCode == CAPTURE_VIDEO) {
                 Log.d(LOG_TAG, "JobOn: CAPTURE_VIDEO intent = " + intent);
+                Log.d(LOG_TAG, "JobOn: CAPTURE_VIDEO intent.getExtras = " + intent.getExtras());
                 // Get the uri of the video clip
                 Uri data = intent.getData();
                 // create a file object from the uri
@@ -458,26 +464,30 @@ public class Capture extends CordovaPlugin {
     }
 
     /** Create a file Uri for saving an image or video */
-    private static Uri getOutputMediaFileUri(int type){
+    private Uri getOutputMediaFileUri(int type){
         return Uri.fromFile(getOutputMediaFile(type));
     }
 
     /** Create a File for saving an image or video */
-    private static File getOutputMediaFile(int type){
+    private File getOutputMediaFile(int type){
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
 
-        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "JobOn");
+        // File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "JobOn");
         // This location works best if you want the created images to be shared
         // between applications and persist after your app has been uninstalled.
 
         // Create the storage directory if it does not exist
-        if (! mediaStorageDir.exists()){
-            if (! mediaStorageDir.mkdirs()){
-                Log.d("JobOn", "failed to create directory");
-                return null;
-            }
-        }
+        // if (! mediaStorageDir.exists()){
+        //     if (! mediaStorageDir.mkdirs()){
+        //         Log.d("JobOn", "failed to create directory");
+        //         return null;
+        //     }
+        // }
+
+        File mediaStorageDir = this.cordova.getActivity().getExternalFilesDir(null);
+        Log.d("JobOn", "getOutputMediaFile mediaStorageDir = " + mediaStorageDir);
+
 
         // Create a media file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
