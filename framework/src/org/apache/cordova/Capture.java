@@ -231,7 +231,8 @@ public class Capture extends CordovaPlugin {
         // intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, Uri.fromFile(video));
 
         Log.d(LOG_TAG, "Build.VERSION.SDK = " + Build.VERSION.SDK_INT);
-        if(Build.VERSION.SDK_INT != Build.VERSION_CODES.GINGERBREAD_MR1) {
+        // NOTE: This should be using JELLY_BEAN_MR2 after we upgrade to android sdk 18.
+        if(Build.VERSION.SDK_INT == 18) {
             Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);  // create a file to save the video
             intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, fileUri);
         }
@@ -318,7 +319,7 @@ public class Capture extends CordovaPlugin {
                 }
             } else if (requestCode == CAPTURE_VIDEO) {
                 Log.d(LOG_TAG, "JobOn: CAPTURE_VIDEO intent = " + intent);
-                Log.d(LOG_TAG, "JobOn: CAPTURE_VIDEO intent.getExtras = " + intent.getExtras());
+                // Log.d(LOG_TAG, "JobOn: CAPTURE_VIDEO intent.getExtras = " + intent.getExtras());
                 // Get the uri of the video clip
                 Uri data = intent.getData();
                 // create a file object from the uri
@@ -465,29 +466,34 @@ public class Capture extends CordovaPlugin {
 
     /** Create a file Uri for saving an image or video */
     private Uri getOutputMediaFileUri(int type){
+        Log.d("JobOn", "getOutputMediaFileUri type = " + type);
         return Uri.fromFile(getOutputMediaFile(type));
     }
 
     /** Create a File for saving an image or video */
     private File getOutputMediaFile(int type){
+
         // To be safe, you should check that the SDCard is mounted
         // using Environment.getExternalStorageState() before doing this.
-
-        // File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "JobOn");
-        // This location works best if you want the created images to be shared
-        // between applications and persist after your app has been uninstalled.
-
-        // Create the storage directory if it does not exist
-        // if (! mediaStorageDir.exists()){
-        //     if (! mediaStorageDir.mkdirs()){
-        //         Log.d("JobOn", "failed to create directory");
-        //         return null;
-        //     }
-        // }
 
         File mediaStorageDir = this.cordova.getActivity().getExternalFilesDir(null);
         Log.d("JobOn", "getOutputMediaFile mediaStorageDir = " + mediaStorageDir);
 
+        // Create the storage directory if it does not exist
+        if (! mediaStorageDir.exists()){
+
+            Log.d("JobOn", "creating mediaStorageDir: " + mediaStorageDir);
+
+            if (! mediaStorageDir.mkdirs()){
+                Log.d("JobOn", "failed to create mediaStroageDir");
+                return null;
+            } else {
+                Log.d("JobOn", "mediaStorageDir created");
+            }
+
+        } else {
+            Log.d("JobOn", "using existing mediaStorageDir: " + mediaStorageDir);
+        }
 
         // Create a media file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
@@ -496,8 +502,9 @@ public class Capture extends CordovaPlugin {
             mediaFile = new File(mediaStorageDir.getPath() + File.separator +
                                  "IMG_"+ timeStamp + ".jpg");
         } else if(type == MEDIA_TYPE_VIDEO) {
-            mediaFile = new File(mediaStorageDir.getPath() + File.separator +
-                                 "VID_"+ timeStamp + ".mp4");
+            Log.d("JobOn", "creating mediaFile");
+            mediaFile = new File(mediaStorageDir.getPath() + File.separator + "VID_"+ timeStamp + ".mp4");
+            Log.d("JobOn", "mediaFile created: " + mediaFile);
         } else {
             return null;
         }
