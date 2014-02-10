@@ -232,10 +232,10 @@ public class Capture extends CordovaPlugin {
 
         Log.d(LOG_TAG, "Build.VERSION.SDK = " + Build.VERSION.SDK_INT);
         // NOTE: This should be using JELLY_BEAN_MR2 after we upgrade to android sdk 18.
-        if(Build.VERSION.SDK_INT == 18) {
-            Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);  // create a file to save the video
-            intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, fileUri);
-        }
+        // if(Build.VERSION.SDK_INT == 18) {
+        //     Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);  // create a file to save the video
+        //     intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, fileUri);
+        // }
 
         this.cordova.startActivityForResult((CordovaPlugin) this, intent, CAPTURE_VIDEO);
     }
